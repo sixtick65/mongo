@@ -8,6 +8,30 @@ dart pub add mongo_dart
 
 
 ```
+curl http://localhost:8080/users/6867579ee6130b87bd000000
+
+curl -X POST http://localhost:8080/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"name":"cho"}'
+
+curl -X PUT http://localhost:8080/users/6867579ee6130b87bd000000 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"name":"kim", "age": 22}'
+
+
+curl -X PATCH http://localhost:8080/users/6867579ee6130b87bd000000 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"name":"kim", "age": 22}'
+
+curl -X DELETE http://localhost:8080/users/68677240f76473b9cc000000 \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+
+```
 ## 도커파일
 FROM dart:stable as build
 WORKDIR /app
