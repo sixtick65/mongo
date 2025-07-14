@@ -2,6 +2,9 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:mongo_dart/mongo_dart.dart';
 
+// 원래 기본적으로 dart 프로그램은 메인이 프로젝트이름.dart 네... mongo.dart
+// 괜히 main.dart로 바꿨네 ㅋㅋ dart run 할때 mongo.dart 를 찾음
+
 final _sessions = <String, dynamic>{};
 void printHelp(){
   print('''
@@ -95,6 +98,7 @@ void main(List<String> arguments) async {
     
     final path = request.uri.path;
     print(path);
+    print(request.method);
     if(path == '/' || path.isEmpty){  // 빈 패스면 [] 빈 리스트로 응답한다. 
       print('path is empty... just continue!!');
       request.response
@@ -107,6 +111,8 @@ void main(List<String> arguments) async {
     }
     // CORS 헤더 추가 (필수일 수 있음)  // 브라우저에서 응답을 처리할것인가 응답이 믿을만한가를 처리
     request.response.headers.set('Access-Control-Allow-Origin', '*');
+    request.response.headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    request.response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
 
     if (request.method == 'GET') { // 조회
       dynamic result;
@@ -200,6 +206,8 @@ void main(List<String> arguments) async {
         ..headers.contentType = ContentType.json
         ..write(jsonEncode({"deleted": result.success, "document": ret}));
         // ..write(jsonEncode({'you_sent': jsonDecode(body)}));
+    } else if (request.method == 'OPTIONS') { // ---------------------------브라우저에서 통신 체크
+      request.response.statusCode = HttpStatus.ok;
     } else {
       request.response
         ..statusCode = HttpStatus.notFound
