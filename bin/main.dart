@@ -52,15 +52,15 @@ void main(List<String> arguments) async {
   print('✅ 서버 실행 중: http://${server.address.address}:${server.port}');
 
   await for (HttpRequest request in server) {
+    
+    print("request remote address : ${request.connectionInfo?.remoteAddress.address}");
+
     // 요청위치가 로컬인지 외부인지
-    print(
-      "request remote address : ${request.connectionInfo?.remoteAddress.address}",
-    );
     if (!isLocal(request.connectionInfo?.remoteAddress.address ?? '')) {
       // 외부이면 토큰 파싱
       final authHeader = request.headers.value('Authorization');
       if (authHeader == null || !authHeader.startsWith('Bearer ')) {
-        // 인증 실패 처리
+        // 인증키 없음
         request.response.statusCode = HttpStatus.unauthorized;
         await request.response.close();
         continue;
@@ -259,9 +259,14 @@ void main(List<String> arguments) async {
           ..statusCode = HttpStatus.notFound
           ..write('경로를 찾을 수 없습니다.');
       }
-      await request.response.close();
+      
     } catch (e) {
       print("error : $e");
+      request.response
+          ..statusCode = HttpStatus.badRequest
+          ..write('$e');
+    } finally {
+      await request.response.close();
     }
   }
 
