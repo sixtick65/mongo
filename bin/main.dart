@@ -54,81 +54,6 @@ void main(List<String> arguments) async {
   await for (HttpRequest request in server) {
     
     print("request remote address : ${request.connectionInfo?.remoteAddress.address}");
-    String email = '';
-    // 요청위치가 로컬인지 외부인지
-    // if (!isLocal(request.connectionInfo?.remoteAddress.address ?? '')) {
-    if (request.method != 'OPTIONS') {
-      // 외부이면 토큰 파싱
-      // print('${request.headers}'); 
-      // print("${request.headers['authorization']}"); 
-      // print("${request.headers['Authorization']}");
-      // print("${request.headers['AUTHORIZATION']}");  
-      final authHeader = request.headers.value('Authorization');
-      print("authHeader : $authHeader");
-      if (authHeader == null || !authHeader.startsWith('Bearer ')) {
-        // 인증키 없음
-        print('인증키 없음');
-        request.response.statusCode = HttpStatus.unauthorized;
-        await request.response.close();
-        continue;
-      }
-      final token = authHeader.substring(
-        'Bearer '.length,
-      ); // request.headers.value('Authorization')
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        request.response.statusCode = HttpStatus.unauthorized;
-        await request.response.close();
-        continue;
-      }
-
-      final payload = utf8.decode(
-        base64Url.decode(base64Url.normalize(parts[1])),
-      );
-      final data = jsonDecode(payload);
-      print("email : ${data['email']}");
-      email = data['email'];
-
-      // 아이디 토큰은 인증을 따로 하지 않는다. 
-      // 액세스 토큰은 
-
-      // 내부 변수 세션에 있나 확인
-      // if (_sessions.containsKey(data['email'])) {
-      //   // 만료 되었나 확인
-      //   print('세션에 있음');
-      //   final exp = data['exp'];
-      //   final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      //   if (exp < now) {
-      //     // 만료됨.. 세션 삭제하고 리턴
-      //     _sessions.remove(data['email']);
-      //     request.response.statusCode = HttpStatus.unauthorized;
-      //     await request.response.close();
-      //     continue;
-      //   } // 아니면 패스
-      // } else {
-      //   // 세션에 없음... 구글에 검증 및 세션에 저장
-      //   print('세션에 없음');
-      //   final uri = Uri.parse(
-      //     'https://oauth2.googleapis.com/tokeninfo?id_token=$token',
-      //   );
-      //   final response = await HttpClient()
-      //       .getUrl(uri)
-      //       .then((req) => req.close());
-      //   print(response);
-      //   print(response.headers);
-      //   print(response.statusCode);
-      //   if (response.statusCode == 200) {
-      //     // 유효키... 세션에 저장
-      //     _sessions[data['email']] = token;
-      //   } else {
-      //     // 불량키
-      //     request.response.statusCode = HttpStatus.unauthorized;
-      //     await request.response.close();
-      //     continue;
-      //   }
-      // }
-    }
-
     final path = request.uri.path;
     print("request path : $path , request method : ${request.method}");
 
@@ -168,7 +93,32 @@ void main(List<String> arguments) async {
           // result = await collection.findOne({"_id" : id});//  find().toList();
           // print(result);
         } else {
-          result = await collection.find(where.eq('email', email) ).toList();
+          final authHeader = request.headers.value('Authorization');
+          print("authHeader : $authHeader");
+          if (authHeader == null || !authHeader.startsWith('Bearer ')) {
+            // 인증키 없음
+            print('인증키 없음');
+            request.response.statusCode = HttpStatus.unauthorized;
+            await request.response.close();
+            continue;
+          }
+          final token = authHeader.substring(
+            'Bearer '.length,
+          ); // request.headers.value('Authorization')
+          final parts = token.split('.');
+          if (parts.length != 3) {
+            request.response.statusCode = HttpStatus.unauthorized;
+            await request.response.close();
+            continue;
+          }
+
+          final payload = utf8.decode(
+            base64Url.decode(base64Url.normalize(parts[1])),
+          );
+          final data = jsonDecode(payload);
+          print("email : ${data['email']}");
+
+          result = await collection.find(where.eq('email', data['email']) ).toList();
         }
         request.response
           ..statusCode = HttpStatus.ok
